@@ -1,0 +1,17 @@
+   // Allocate memory for the array
+   char* pCharArray = new char[CName::sizeOfBuffer];
+   strcpy_s(pCharArray, CName::sizeOfBuffer, "Array of characters");
+
+   // Deallocate memory for the array
+   delete [] pCharArray;
+   pCharArray = NULL;
+
+   // Allocate memory for the object
+   CName* pName = new CName;
+   pName->SetName("Firstname", "Lastname");
+
+   // Deallocate memory for the object
+   delete pName;
+   pName = NULL;
+
+   -------------------------------------------------------------------------------------------------------

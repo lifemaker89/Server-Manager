@@ -13,3 +13,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+//new
+#include <stdio.h>
+#include "psapi.h"

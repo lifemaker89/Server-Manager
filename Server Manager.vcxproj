@@ -147,12 +147,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="configs.h" />
+    <ClInclude Include="Core.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Server Manager.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="configs.cpp" />
+    <ClCompile Include="Core.cpp" />
     <ClCompile Include="Server Manager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +165,12 @@
   <ItemGroup>
     <Image Include="Server Manager.ico" />
     <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Coding cheatsheet.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

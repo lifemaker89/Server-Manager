@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "Server Manager.h"
+#include "Core.h"
 
 #define MAX_LOADSTRING 100
 
@@ -17,8 +18,15 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+//global
 HWND G_hwnd;
 HDC G_hdc;
+
+char G_cMsgMaxList[256];
+
+//classes
+class Core* g_pCore = NULL;
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -41,8 +49,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_SERVERMANAGER));
+    Initialize();
+    EventLoop();
 
+    
+
+    
+
+
+}
+int EventLoop()
+{
+    HACCEL hAccelTable = LoadAccelerators(hInst, MAKEINTRESOURCE(IDC_SERVERMANAGER));
     MSG msg;
 
     // Main message loop:
@@ -52,19 +70,45 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+            UpdateScreen();
         }
     }
-
-    return (int) msg.wParam;
+    return (int)msg.wParam;
 }
+void Initialize()
+{
+    //if (_InitWinsock() == FALSE) {
+    //    MessageBox(G_hWnd, "Socket 1.1 not found! Cannot execute program.", "ERROR", MB_ICONEXCLAMATION | MB_OK);
+    //    PostQuitMessage(0);
+    //    return;
+    //}
 
+    // Allocate memory for the object
+    Core* g_pCore = new Core(G_hwnd);
+    
+    /*if (G_pGateCore == NULL) {
+        MessageBox(G_hWnd, "Init fail!", "ERROR", MB_ICONEXCLAMATION | MB_OK);
+        PostQuitMessage(0);
+        return;
+    }
 
+    if (G_pGateCore->bInit() == FALSE) {
+        MessageBox(G_hWnd, "Init fail!", "ERROR", MB_ICONEXCLAMATION | MB_OK);
+        PostQuitMessage(0);
+        return;
+    }
 
-//
+    G_pListenSock = new class XSocket(G_hWnd, 300);
+    G_pListenSock->bListen(G_pGateCore->m_cGateServerAddr, G_pGateCore->m_iGateServerPort, WM_USER_ACCEPT);
+
+    G_mmTimer0 = _StartTimer(3000);
+
+    PutLogList("(!) Gate Server Listening...");*/
+
+    DisplayInLogList("Test");
+}
 //  FUNCTION: MyRegisterClass()
-//
 //  PURPOSE: Registers the window class.
-//
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
     WNDCLASSEXW wcex;
@@ -86,16 +130,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-//
 //   FUNCTION: InitInstance(HINSTANCE, int)
-//
 //   PURPOSE: Saves instance handle and creates main window
-//
 //   COMMENTS:
-//
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
@@ -114,16 +153,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-//
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
 //  PURPOSE: Processes messages for the main window.
-//
 //  WM_COMMAND  - process the application menu
 //  WM_PAINT    - Paint the main window
 //  WM_DESTROY  - post a quit message and return
-//
-//
+// MB_OK
+// MB_OKCANCEL
+// MB_ABORTRETRYIGNORE
+// MB_YESNOCANCEL
+// MB_YESNO
+// MB_RETRYCANCEL
+// MB_HELP
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -138,47 +179,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
+                if (MessageBox(
+                    NULL,
+                    (LPCWSTR)L"Close Server Manager",
+                    (LPCWSTR)L"Please close down server and reboot", MB_ICONEXCLAMATION | MB_YESNO)== IDYES) {
+                    return (DefWindowProc(hWnd, message, wParam, lParam));
+                } 
                 DestroyWindow(hWnd);
                 break;
+    
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
         }
         break;
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            G_hdc = BeginPaint(hWnd, &ps);
-            DrawScreen(G_hdc, 88, 99);
-            EndPaint(hWnd, &ps);
-        }
+    {
+        PAINTSTRUCT ps;
+        G_hdc = BeginPaint(hWnd, &ps);
+        DrawScreen(NULL, G_hdc); //, 88, 99
+        EndPaint(hWnd, &ps);
+    }
         break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
+    case WM_KEYDOWN:
+        g_pCore->OnKeyDown(wParam, lParam);
+        break;
+
+    case WM_KEYUP:
+        g_pCore->OnKeyUp(wParam, lParam);
+        break;
+
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
-}// I'll assume hwnd is global
-void UpdateScreen()
-{
-   // G_hdc = ::GetDc(G_hwnd);
-    DrawScreen(G_hdc, 88, 99);
-    //ReleaseDC(G_hdc);
-}
 
-void DrawScreen(HDC hdc, int points, int level)
-{
-    // Might need a rectangle here to overwrite old text
-    SelectObject(hdc, hInst);    // I assume hfDefault is global
-    TCHAR text[256];
-    swprintf_s(text, 256, L"Points: %d", points);
-    TextOut(hdc, 10, 70, text, wcslen(text));
-    swprintf_s(text, 256, L"Level: %d", level);
-    TextOut(hdc, 10, 85, text, wcslen(text));
-}
+    /*case WM_USER_TIMERSIGNAL:
+        if (wParam == G_mmTimer0) G_pGateCore->OnTimer(0);
+        break;
 
+    case WM_USER_ACCEPT:
+        OnAccept();
+        break;
+
+*/
+}
 
 // Message handler for about box.
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -198,4 +248,100 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+////
+////
+////
+//// Lifemaker89 Coding ////
+
+void UpdateScreen()
+{
+      //  if (G_cMsgUpdated == TRUE) {
+      //      InvalidateRect(G_hwnd, NULL, TRUE);
+    //        G_cMsgUpdated = FALSE;
+   // }
+}
+
+void DrawScreen(const char* cMsg, HDC hdc)
+{
+    TCHAR ctext[256];
+
+    SelectObject(hdc, hInst);
+
+    //always on screen
+    swprintf_s(ctext, 256, L"Ram Usage: %d", "100"); //add ram check
+    TextOut(hdc, 10, 70, ctext, wcslen(ctext));
+    swprintf_s(ctext, 256, L"Memory Usage: %d", dgetUsedMemoryMB());
+    TextOut(hdc, 10, 85, ctext, wcslen(ctext));
+
+    swprintf_s(ctext, 256, L"Press [F1 + F4]  Shut down all map servers");
+    TextOut(hdc, 10, 10, ctext, wcslen(ctext));
+    swprintf_s(ctext, 256, L"Press [F2] Shows not activated game server list");
+    TextOut(hdc, 10, 25, ctext, wcslen(ctext));
+    swprintf_s(ctext, 256, L"Press [F3] Shows activated game server list");
+    TextOut(hdc, 10, 40, ctext, wcslen(ctext));
+    swprintf_s(ctext, 256, L"________________________________________________________________________________");
+    TextOut(hdc, 10, 55, ctext, wcslen(ctext));
+ 
+    //List text
+   // for (int i = 0; i < 35; i++) {
+   //     cMsg = (char*)(G_cMsgMaxList + i * 60);
+   //     TextOut(hdc, 10, 70 - i * 15, (LPCWSTR)cMsg, strlen(cMsg));
+   // }
+
+   // LogFile(cMsg);
+}
+
+double dgetUsedMemoryMB()
+{
+    PROCESS_MEMORY_COUNTERS pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
+    return static_cast<double>(pmc.WorkingSetSize) / static_cast<double>(1024 * 1024);
+}
+
+void DisplayInLogList(const char* cMsg)
+{
+    char cTemp[120 * 50];
+    TCHAR cListtext[256];
+
+   // G_cMsgUpdated = TRUE;
+    ZeroMemory(cTemp, sizeof(cTemp));
+    memcpy((cTemp + 120), G_cMsgMaxList, 120 * 49);
+    memcpy(cTemp, cMsg, strlen(cMsg));
+
+//    PAINTSTRUCT ps;
+//    HDC hdc;
+//
+//    G_hdc = BeginPaint(hWnd, &ps);
+//    
+//    hdc = BeginPaint(G_hWnd, &ps);
+//
+//    SetBkMode(hdc, TRANSPARENT);
+//    
+//    TextOut(G_hdc, 10, 70, (LPCWSTR)cMsg, strlen(cMsg));
+//;
+//   // UpdateScreen();
+//    LogFile(cMsg);
+//    EndPaint(hWnd, &ps);
+
+}
+
+void LogFile(const char* cMsg)
+{
+    FILE* pFile;
+    TCHAR cBuffer[512];
+    SYSTEMTIME SysTime;
+    int line, line2;
+
+    fopen_s(&pFile, "Logs\\Login.log", "at");
+    if (pFile == NULL) return;
+    ZeroMemory(cBuffer, sizeof(cBuffer));
+
+    GetLocalTime(&SysTime);
+    line = swprintf_s(cBuffer, 256, L"(% 4d: % 2d : % 2d : % 2d : % 2d) - ", SysTime.wYear, SysTime.wMonth, SysTime.wDay, SysTime.wHour, SysTime.wMinute);
+    line2 = swprintf_s(cBuffer + line, 256 - line - 1, L"%", cMsg);
+    swprintf_s(cBuffer + line2, 256 - line - 1, L"\n");
+    fwrite(cBuffer, sizeof(char), sizeof(cBuffer), pFile);
+    fclose(pFile);
 }

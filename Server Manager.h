@@ -4,4 +4,9 @@
 
 
 void UpdateScreen();
-void DrawScreen(HDC hdc, int points, int level);
+int EventLoop();
+void Initialize();
+double dgetUsedMemoryMB();
+void DrawScreen(const char* cMsg, HDC hdc = NULL);
+void DisplayInLogList(const char* cMsg);
+void LogFile(const char* cMsg);

@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+Debug/Server Manager.Build.CppClean.log
+Debug/Server Manager.Build.CppClean.log
+Debug/Server Manager.Build.CppClean.log
+Debug/Server Manager.Build.CppClean.log
+Debug/Server Manager.ilk
+Debug/Server Manager.ilk
+Debug/Server Manager.ilk
+Debug/Server Manager.log
+*.tlog
+Debug/Server Manager.tlog/CL.command.1.tlog
+Debug/vc142.pdb
